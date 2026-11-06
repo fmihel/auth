@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT GET/POST Payload Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; padding: 20px; line-height: 1.6; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 10px; }
+        button { padding: 10px 15px; color: white; border: none; cursor: pointer; border-radius: 4px; margin-right: 5px; }
+        .btn-blue { background: #007BFF; }
+        .btn-green { background: #28a745; }
+        .btn-orange { background: #fd7e14; }
+        .btn-gray { background: #6c757d; }
+        .hidden { display: none; }
+        .box { border: 1px solid #ddd; padding: 15px; margin-top: 15px; border-radius: 5px; background: #fdfdfd; }
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .status { padding: 10px; margin-top: 15px; border-radius: 4px; font-weight: bold; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+    <!-- Форма входа -->
+    <div id="login-block">
+        <h2>Вход в систему</h2>
+        <div class="form-group">
+            <label>Логин:</label>
+            <input type="text" id="username" value="admin">
+        </div>
+        <div class="form-group">
+            <label>Пароль:</label>
+            <input type="password" id="password" value="secret123">
+        </div>
+        <button class="btn-blue" id="login-btn">Войти</button>
+    </div>
+
+    <!-- Защищенная зона -->
+    <div id="protected-block" class="hidden">
+        <h2>Панель управления API 🎉</h2>
+        <button class="btn-gray" id="logout-btn">Выйти из аккаунта</button>
+
+        <!-- Тест GET запроса -->
+        <div class="box">
+            <h3>1. Тест GET запроса (Данные в URL)</h3>
+            <div class="form-group">
+                <label>ID Товара (item_id):</label>
+                <input type="text" id="get-item-id" value="777">
+            </div>
+            <button class="btn-green" id="send-get-btn">Отправить GET с токеном</button>
+        </div>
+
+        <!-- Тест POST запроса -->
+        <div class="box">
+            <h3>2. Тест POST запроса (Данные в JSON-тело)</h3>
+            <div class="form-group">
+                <label>Название товара:</label>
+                <input type="text" id="post-item-name" value="Смартфон">
+            </div>
+            <div class="form-group">
+                <label>Цена:</label>
+                <input type="text" id="post-item-price" value="500">
+            </div>
+            <button class="btn-orange" id="send-post-btn">Отправить POST с токеном</button>
+        </div>
+
+        <!-- Вывод ответа от сервера -->
+        <div id="response-block" class="hidden">
+            <h3>Ответ сервера (protected.php):</h3>
+            <pre><code id="json-output"></code></pre>
+        </div>
+    </div>
+
+    <div id="error-message" class="status error hidden"></div>
+
+    <script>
+        const tokenKey = 'jwt_token';
+
+        // Элементы
+        const loginBlock = document.getElementById('login-block');
+        const protectedBlock = document.getElementById('protected-block');
+        const responseBlock = document.getElementById('response-block');
+        const jsonOutput = document.getElementById('json-output');
+        const errorMsg = document.getElementById('error-message');
+
+        function checkAuth() {
+            const token = sessionStorage.getItem(tokenKey);
+            if (token) {
+                loginBlock.classList.add('hidden');
+                protectedBlock.classList.remove('hidden');
+            } else {
+                loginBlock.classList.remove('hidden');
+                protectedBlock.classList.add('hidden');
+                responseBlock.classList.add('hidden');
+            }
+        }
+
+        // Авторизация (Получение токена)
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            errorMsg.classList.add('hidden');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch('login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                sessionStorage.setItem(tokenKey, data.token);
+                checkAuth();
+            } else {
+                errorMsg.textContent = data.message;
+                errorMsg.classList.remove('hidden');
+            }
+        });
+
+        // Функция для отправки запросов (Универсальная)
+        async function makeRequest(url, method, bodyData = null) {
+            errorMsg.classList.add('hidden');
+            const token = sessionStorage.getItem(tokenKey);
+
+            const options = {
+                method: method,
+                headers: {
+                    // Токен ВСЕГДА идет в заголовке, независимо от GET или POST
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+
+            if (method === 'POST' && bodyData) {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(bodyData);
+            }
+
+            try {
+                const res = await fetch(url, options);
+                const data = await res.json();
+
+                responseBlock.classList.remove('hidden');
+                jsonOutput.textContent = JSON.stringify(data, null, 4);
+
+                if (res.status === 401) {
+                    sessionStorage.removeItem(tokenKey);
+                    setTimeout(checkAuth, 1500);
+                }
+            } catch (err) {
+                errorMsg.textContent = "Ошибка сети или сервера";
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        // ОБРАБОТКА GET ЗАПРОСА
+        document.getElementById('send-get-btn').addEventListener('click', () => {
+            const itemId = document.getElementById('get-item-id').value;
+            // Данные внедряются прямо в URL строку: ?item_id=777
+            const url = `protected.php?item_id=${encodeURIComponent(itemId)}`;
+            makeRequest(url, 'GET');
+        });
+
+        // ОБРАБОТКА POST ЗАПРОСА
+        document.getElementById('send-post-btn').addEventListener('click', () => {
+            const itemName = document.getElementById('post-item-name').value;
+            const price = document.getElementById('post-item-price').value;
+            
+            // Данные упаковываются в объект для тела запроса
+            const payload = {
+                item_name: itemName,
+                price: Number(price)
+            };
+            makeRequest('protected.php', 'POST', payload);
+        });
+
+        // Выход
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            sessionStorage.removeItem(tokenKey);
+            checkAuth();
+        });
+
+        checkAuth();
+    </script>
+</body>
+</html>
