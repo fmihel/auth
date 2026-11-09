@@ -57,7 +57,9 @@ class Session {
 
     async request(url, data = null, method = 'POST') {
 
-        if (!this.enable()) throw new Error("no autorize");
+        if (!this.enable()) {
+            throw new Error("no autorize");
+        };
 
         const options = {
             method: method,
