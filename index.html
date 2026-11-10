@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>test</title>
+    <style>
+        body {
+            padding: 2rem;
+            font-family: Arial, sans-serif;
+            background-color: black;
+            color: lime;
+        }
+
+        .group {}
+
+        input {
+            display: block;
+        }
+    </style>
+</head>
+<script>
+    class Request {
+        constructor() {
+            this.token = false;
+        }
+        async send(url, bodyData = null, method = 'POST') {
+            const options = {
+                method: method,
+                headers: {
+                    ...this.token ? { 'Authorization': `Bearer ${this.token}` } : {}
+                }
+            };
+
+            if (method === 'POST' && bodyData) {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(bodyData);
+            }
+
+            try {
+                const res = await fetch(url, options);
+                const data = await res.json();
+                
+                if (res.status === 401) {
+                    return {
+                        status: 401,
+                        data: []
+                    }
+                }
+                return {
+                    status: res.status,
+                    data: JSON.stringify(data, null, 4)
+                }
+
+            } catch (err) {
+                throw err;
+            }
+        }
+    }
+
+
+    class Session {
+        constructor(request) {
+            this.token = false;
+            this.request = request;
+            this.loginScript = 'login.php';
+        }
+        enable() {
+            return !!this.token;
+        }
+        async autorizeByLogin(login, password) {
+            try {
+                let res = this.request.send(this.loginScript, { login, password });
+                console.log(res);
+            } catch (error) {
+                this.token = false;
+
+            }
+        }
+        autorizeByToken() {
+
+        }
+
+
+    }
+    const request = new Request();
+    const session = new Session(request);
+
+
+    function autorizeByLogin() {
+        const login = document.getElementById('login');
+        const pass = document.getElementById('pass');
+
+        session.autorizeByLogin(login.value, pass.value);
+
+    }
+</script>
+
+<body>
+    <div class="group autorize">
+        <input id="login" value="1" />
+        <input id="pass" value="1" />
+        <input type="button" value="autorize" onclick="autorizeByLogin()" />
+    </div>
+
+</body>
+
+</html>
