@@ -19,25 +19,6 @@ class session
         return ! ! self::$token;
     }
 
-    // public static function autorize($callback)
-    // {
-
-    //     $input_data = json_decode(file_get_contents("php://input"), true);
-
-    //     if (isset($input_data['password']) && isset($input_data['username'])) {
-    //         self::autorizeByLogin($input_data['login'], $input_data['password']);
-    //     } elseif (isset($input_data['token'])) {
-    //         self::autorizeByToken($input_data['token']);
-    //     } else {
-    //         throw new \Exception('no autorize data');
-    //     }
-
-    //     if ($callback) {
-    //         $callback();
-    //     }
-
-    // }
-
     public static function autorizeByLogin(string $login, string $password)
     {
         self::$token     = false;
@@ -45,7 +26,7 @@ class session
 
         try {
             if (empty($tokenData = static::createTokenData(['login' => $login, 'password' => $password]))) {
-                throw new \Exception('getDataForToken return empty');
+                throw new \Exception('createTokenData');
             }
             self::$token     = self::createToken($tokenData, self::$key, self::$server, self::$expire);
             self::$tokenData = $tokenData;

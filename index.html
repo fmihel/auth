@@ -41,16 +41,10 @@
             try {
                 const res = await fetch(url, options);
                 const data = await res.json();
-                
-                if (res.status === 401) {
-                    return {
-                        status: 401,
-                        data: []
-                    }
-                }
+
                 return {
                     status: res.status,
-                    data: JSON.stringify(data, null, 4)
+                    data: data
                 }
 
             } catch (err) {
@@ -71,10 +65,18 @@
         }
         async autorizeByLogin(login, password) {
             try {
-                let res = this.request.send(this.loginScript, { login, password });
-                console.log(res);
+                const res = await this.request.send(this.loginScript, { login, password });
+                const { status, data } = res;
+                if (status == 401 || !data.success){
+                    throw new Error('access denied');
+                }
+                
+                console.log({status,data});
+
             } catch (error) {
+                
                 this.token = false;
+                console.log(error);
 
             }
         }

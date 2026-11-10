@@ -1,9 +1,12 @@
 <?php
+
 require_once __DIR__ . '/my-session.php';
 require_once __DIR__ . '/router/input.php';
 require_once __DIR__ . '/router/response.php';
+require_once __DIR__ . '/router/exceptions/AccessDenied.php';
 
 use fmihel\console;
+use fmihel\router\exceptions\AccessDenied;
 use fmihel\router\input;
 
 try {
@@ -11,14 +14,13 @@ try {
     $login = input::data('login');
     $pass  = input::data('password');
 
-    console::log($login, $pass);
     session::autorizeByLogin($login, $pass);
 
-    response::data([
-        'success' => true,
-        'token'   => session::$token,
-    ]);
+    response::success(['token' => session::$token]);
 
+} catch (AccessDenied $e) {
+    response::error($e, 401);
 } catch (\Exception $e) {
-    response::error($e);
+    console::log($e);
+    response::error($e, 401);
 };

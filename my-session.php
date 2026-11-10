@@ -1,5 +1,7 @@
 <?php
 
+use fmihel\router\exceptions\AccessDenied;
+
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/router/session.php';
 require_once __DIR__ . '/config.php';
@@ -11,7 +13,8 @@ define('USERS', [
 
 class session extends fmihel\router\session
 {
-    public static function createToken(array $params): array
+
+    public static function createTokenData(array $params): array
     {
         foreach (USERS as $user) {
             if ($user['login'] === $params['login'] && $user['password'] === $params['password']) {
@@ -21,7 +24,8 @@ class session extends fmihel\router\session
                 ];
             }
         }
-        throw new \Exception('no user');
+        throw new AccessDenied();
+        // throw new \Exception('access denied');
     }
 
     protected static function data(string $name, $default = self::EXCEPTION)

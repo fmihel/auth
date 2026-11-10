@@ -2,28 +2,38 @@
 
 class response
 {
-    public static function data(array $data)
+    public static function data(array $data, $code = -1)
     {
         header("Content-Type: application/json; charset=UTF-8");
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Allow-Headers: Authorization, Content-Type");
         header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 
+        if ($code > 0) {
+            http_response_code($code);
+        }
         echo json_encode($data);
         exit();
     }
-    public static function error($e)
+    public static function error($e, $code = -1)
     {
         $out = [
             'success' => 0,
-            'msg'     => '',
+            'message' => '',
         ];
         if (is_a($e, '\Exception')) {
-            $out['msg'] = $e->getMessage();
+            $out['message'] = $e->getMessage();
         } else {
-            $out['msg'] = "$e";
+            $out['message'] = "$e";
         }
-        self::data($out);
+        self::data($out, $code);
+    }
+    public static function success($data, $code = -1)
+    {
+        self::data([
+            'success' => 1,
+            'data'    => $data,
+        ], $code);
     }
 
 }
