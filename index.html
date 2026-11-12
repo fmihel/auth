@@ -18,94 +18,111 @@
         input {
             display: block;
         }
+
+        body.loading>.loading {
+            display: block;
+        }
+
+        body.loading>.not-autorized {
+            display: none;
+        }
+
+        body.loading>.autorized {
+            display: none;
+        }
+
+        body.autorized>.loading {
+            display: none;
+        }
+
+        body.autorized>.not-autorized {
+            display: none;
+        }
+
+        body.autorized>.autorized {
+            display: block;
+        }
+
+        body.not-autorized>.loading {
+            display: none;
+        }
+
+        body.not-autorized>.not-autorized {
+            display: block;
+        }
+
+        body.not-autorized>.autorized {
+            display: none;
+        }
     </style>
 </head>
-<script>
-    class Request {
-        constructor() {
-            this.token = false;
-        }
-        async send(url, bodyData = null, method = 'POST') {
-            const options = {
-                method: method,
-                headers: {
-                    ...this.token ? { 'Authorization': `Bearer ${this.token}` } : {}
-                }
-            };
+<script src="./js/Request.js"></script>
+<script src="./js/Session.js"></script>
+<script src="./utils.js"></script>
 
-            if (method === 'POST' && bodyData) {
-                options.headers['Content-Type'] = 'application/json';
-                options.body = JSON.stringify(bodyData);
-            }
+<body class="loading">
 
-            try {
-                const res = await fetch(url, options);
-                const data = await res.json();
-
-                return {
-                    status: res.status,
-                    data: data
-                }
-
-            } catch (err) {
-                throw err;
-            }
-        }
-    }
-
-
-    class Session {
-        constructor(request) {
-            this.token = false;
-            this.request = request;
-            this.loginScript = 'login.php';
-        }
-        enable() {
-            return !!this.token;
-        }
-        async autorizeByLogin(login, password) {
-            try {
-                const res = await this.request.send(this.loginScript, { login, password });
-                const { status, data } = res;
-                if (status == 401 || !data.success){
-                    throw new Error('access denied');
-                }
-                
-                console.log({status,data});
-
-            } catch (error) {
-                
-                this.token = false;
-                console.log(error);
-
-            }
-        }
-        autorizeByToken() {
-
-        }
-
-
-    }
-    const request = new Request();
-    const session = new Session(request);
-
-
-    function autorizeByLogin() {
-        const login = document.getElementById('login');
-        const pass = document.getElementById('pass');
-
-        session.autorizeByLogin(login.value, pass.value);
-
-    }
-</script>
-
-<body>
-    <div class="group autorize">
-        <input id="login" value="1" />
-        <input id="pass" value="1" />
-        <input type="button" value="autorize" onclick="autorizeByLogin()" />
+    <div class="loading">
+        loading...
     </div>
 
+    <div class="not-autorized">
+        <div id="autorize" class="group">
+            <input id="login" value="1" />
+            <input id="pass" value="1" />
+            <input type="button" value="autorize" onclick="autorizeByLogin()" />
+        </div>
+    </div>
+
+    <div class="autorized">
+        <input id="sending_data" value="aaaa" />
+        <input type="button" value="send" onclick="send()" />
+
+        <hr />
+        <input type="button" value="logout" onclick="logout()" />
+
+    </div>
+
+    <script>
+        const request = new Request();
+        const session = new Session(request);
+
+        const body = DOM('body');
+        const login_group = DOM('.group.autorize');
+        const login = DOM('#login');
+        const pass = DOM('#pass');
+        const sending_data = DOM('#sending_data');
+
+        session.on('autorize', () => {
+            console.log('autorized');
+            DOM_CLASS.replace(body, 'autorized');
+        });
+
+        session.on('logout', () => {
+            console.log('logout');
+            DOM_CLASS.replace(body, 'not-autorized');
+        });
+
+        session.autorizeByToken()
+            .catch(e => {
+                DOM_CLASS.replace(body, 'not-autorized');
+            })
+
+
+        function autorizeByLogin() {
+            session.autorizeByLogin(login.value, pass.value);
+        }
+
+        function logout() {
+            session.logout();
+        }
+
+        function send() {
+            console.log(sending_data.value);
+            request.post('./router.php', { value: sending_data.value });
+
+        }
+    </script>
 </body>
 
 </html>

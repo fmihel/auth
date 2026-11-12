@@ -5,15 +5,22 @@ use fmihel\router\exceptions\TokenException;
 
 class input
 {
-    const EXCEPTION      = '-exception-';
-    private static $data = null;
+    const EXCEPTION       = '-exception-';
+    private static $data  = null;
+    private static $route = false;
 
-    public static function data($name, $default = self::EXCEPTION)
+    public static function data($name = '', $default = self::EXCEPTION)
     {
         try {
 
             if (self::$data === null) {
-                self::$data = json_decode(file_get_contents("php://input"), true);
+                $data        = json_decode(file_get_contents("php://input"), true);
+                self::$data  = $data['data'] ?? [];
+                self::$route = $data['to'] ?? false;
+            }
+
+            if (empty($name)) {
+                return self::$data;
             }
 
             if (! isset(self::$data[$name])) {
@@ -44,6 +51,32 @@ class input
             // exit();
         }
         return $matches[1];
-
     }
+
+    public static function route()
+    {
+        return self::$route;
+    }
+
+    public static function getHeaderVar(string $name, $default = self::EXCEPTION): string
+    {
+        $name = strtoupper(trim($name));
+        if (strpos($name, 'HTTP_') !== 0) {
+            $name = 'HTTP_' . $name;
+        }
+        $name = str_replace('-', '_', $name);
+
+        if (isset($_SERVER[$name])) {
+            // Получаем значение и декодируем обратно из URL-формата (если кодировали в JS)
+            $rawHeader = $_SERVER[$name];
+            $myData    = urldecode($rawHeader);
+
+            return htmlspecialchars($myData);
+        }
+        if ($default === self::EXCEPTION) {
+            throw new \Exception("not exists $name");
+        }
+        return $default;
+    }
+
 }

@@ -14,10 +14,10 @@ define('USERS', [
 class session extends fmihel\router\session
 {
 
-    public static function createTokenData(array $params): array
+    public static function checkLogin(string $login, string $password): array
     {
         foreach (USERS as $user) {
-            if ($user['login'] === $params['login'] && $user['password'] === $params['password']) {
+            if ($user['login'] === $login && $user['password'] === $password) {
                 return [
                     'id'   => $user['id'],
                     'name' => $user['name'],
@@ -49,5 +49,15 @@ class session extends fmihel\router\session
 
         return $user[$name];
 
+    }
+
+    /** данные отправялемые на клиент вместе с токеном */
+    public static function clientTokenInfo(): array
+    {
+        return [
+            'token' => self::$token,
+            'name'  => self::$tokenData['name'],
+            'right' => self::data('right'),
+        ];
     }
 }

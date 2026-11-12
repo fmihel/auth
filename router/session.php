@@ -3,6 +3,7 @@ namespace fmihel\router;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use fmihel\router\exceptions\MethodIsNotDefined;
 
 class session
 {
@@ -25,7 +26,7 @@ class session
         self::$tokenData = [];
 
         try {
-            if (empty($tokenData = static::createTokenData(['login' => $login, 'password' => $password]))) {
+            if (empty($tokenData = static::checkLogin($login, $password))) {
                 throw new \Exception('createTokenData');
             }
             self::$token     = self::createToken($tokenData, self::$key, self::$server, self::$expire);
@@ -46,10 +47,11 @@ class session
         self::$tokenData = [];
 
         try {
-            $decoded = JWT::decode($token, new Key(self::$key, 'HS256'));
+            $decoded = JWT::decode($token, new Key(self::$key, 'HS256')); // возвращает stdClass
+            $unpack  = json_decode(json_encode($decoded), true);          // превращаем в hash
 
             self::$token     = $token;
-            self::$tokenData = $decoded->data;
+            self::$tokenData = $unpack['data'];
 
         } catch (\Exception $e) {
 
@@ -75,14 +77,17 @@ class session
         return $jwt;
     }
 
-    protected static function createTokenData(array $params): array
+    /** проверка авторизации по логин/паролю, должен вернуть структуру, которая упакуется в token
+     * обычно [id,name]
+     */
+    protected static function checkLogin(string $login, string $password): array
     {
-        return [];
+        throw new MethodIsNotDefined(__METHOD__);
     }
 
     protected static function data(string $name, $default = self::EXCEPTION)
     {
-        return [];
+        throw new MethodIsNotDefined(__METHOD__);
     }
 
 }

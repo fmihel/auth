@@ -28,11 +28,11 @@ class response
         }
         self::data($out, $code);
     }
-    public static function success($data, $code = -1)
+    public static function success($payload, $code = -1)
     {
         self::data([
             'success' => 1,
-            'data'    => $data,
+            'payload' => $payload,
         ], $code);
     }
 

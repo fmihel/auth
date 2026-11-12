@@ -11,16 +11,23 @@ use fmihel\router\input;
 
 try {
 
-    $login = input::data('login');
-    $pass  = input::data('password');
+    $login = input::data('login', false);
+    $pass  = input::data('password', false);
+    $token = input::data('token', false);
 
-    session::autorizeByLogin($login, $pass);
+    if ($login && $pass) {
+        session::autorizeByLogin($login, $pass);
+    } elseif ($token) {
+        session::autorizeByToken($token);
+    } else {
+        throw new AccessDenied();
+    }
 
-    response::success(['token' => session::$token]);
+    response::success(session::clientTokenInfo());
 
 } catch (AccessDenied $e) {
     response::error($e, 401);
 } catch (\Exception $e) {
     console::log($e);
     response::error($e, 401);
-};
+}
