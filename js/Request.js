@@ -9,18 +9,32 @@ class Request {
         url = this.router,
         to = undefined,
         attrs = {},
-        params = {} }
-    ) {
+        headers = {},
+        noCache = true,
+        ...params
 
-        let config = { url, to, attrs, headers: {}, params };
+    }) {
+
+        let config = { url, to, attrs, headers, ...params };
         config = await this._callInterceptors('before', config);
 
-        const curl = this.prepareUrl(config.url, config.attrs);
+        const curl = this.prepareUrl(
+            config.url,
+            {
+                ...config.attrs,
+                ...noCache ? { _nc: Date.now().toString() } : {}
+            }
+        );
 
         const options = {
             method: 'GET',
+            ...noCache ? { cache: 'no-store' } : {},
             headers: {
                 // ...this.token ? { 'Authorization': `Bearer ${this.token}` } : {}
+                ...noCache ? {
+                    ['Cache-Control']: 'no-cache, no-store, must-revalidate',
+                    Pragma: 'no-cache'
+                } : {},
                 ...config.headers
             }
         };
@@ -44,23 +58,30 @@ class Request {
             throw error;
         }
     }
-    async post({
-            url = this.router,
-            to = undefined,
-            data = {},
-            params
-        }) {
-        
 
-        let config = { url, to, data, headers: {}, params };
+    async post({
+        url = this.router,
+        to = undefined,
+        data = {},
+        noCache = true,
+        ...params
+    }) {
+
+
+        let config = { url, to, data, headers: {}, ...params };
         config = await this._callInterceptors('before', config);
 
         let body = { to, data: config.data };
         const options = {
             method: 'POST',
+            ...noCache ? { cache: 'no-store' } : {},
             headers: {
                 // ...this.token ? { 'Authorization': `Bearer ${this.token}` } : {},
                 'Content-Type': 'application/json',
+                ...noCache ? {
+                    ['Cache-Control']: 'no-cache, no-store, must-revalidate',
+                    Pragma: 'no-cache'
+                } : {},
                 ...config.headers
             },
             body: JSON.stringify(body)

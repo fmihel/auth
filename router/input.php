@@ -7,17 +7,13 @@ class input
 {
     const EXCEPTION       = '-exception-';
     private static $data  = null;
-    private static $route = false;
+    private static $route = '';
 
     public static function data($name = '', $default = self::EXCEPTION)
     {
         try {
 
-            if (self::$data === null) {
-                $data        = json_decode(file_get_contents("php://input"), true);
-                self::$data  = $data['data'] ?? [];
-                self::$route = $data['to'] ?? false;
-            }
+            self::loadData();
 
             if (empty($name)) {
                 return self::$data;
@@ -53,8 +49,9 @@ class input
         return $matches[1];
     }
 
-    public static function route()
+    public static function route(): string
     {
+        self::loadData();
         return self::$route;
     }
 
@@ -77,6 +74,15 @@ class input
             throw new \Exception("not exists $name");
         }
         return $default;
+    }
+    private static function loadData()
+    {
+        if (self::$data === null) {
+            $data        = json_decode(file_get_contents("php://input"), true);
+            self::$data  = $data['data'] ?? [];
+            self::$route = $data['to'] ?? false;
+        }
+
     }
 
 }

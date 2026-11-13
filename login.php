@@ -8,6 +8,7 @@ require_once __DIR__ . '/router/exceptions/AccessDenied.php';
 use fmihel\console;
 use fmihel\router\exceptions\AccessDenied;
 use fmihel\router\input;
+use fmihel\router\response;
 
 try {
 

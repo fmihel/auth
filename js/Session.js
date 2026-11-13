@@ -13,13 +13,20 @@ class Session {
         this.request.addInterceptor((state, config) => {
 
             if (state === 'before') {
-                if (!config.params.skipAuth && this.data && this.data.token) {
+                if (!(config?.skipAuth) && this?.data?.token) {
                     config.headers.Authorization = `Bearer ${this.data.token}`;
                 }
             }
 
             if (state === 'after') {
-
+                if (config.status == 401){
+                    this.logout();
+                }
+            }
+            if (state === 'error') {
+                if (config.status == 401){
+                    this.logout();
+                }
             }
             return config
         })
@@ -34,7 +41,7 @@ class Session {
                 {
                     url: this.loginScript,
                     data: { login, password },
-                    params: { skipAuth: true }
+                    skipAuth: true 
                 });
             const { status, data } = res;
             if (status == 401 || !data.success) {
@@ -61,7 +68,12 @@ class Session {
             if (!token) {
                 throw new Error("no token");
             }
-            const res = await this.request.post(this.loginScript, { token });
+            const res = await this.request.post({
+                url:this.loginScript, 
+                data:{ token },
+                skipAuth: true 
+            });
+
             const { status, data } = res;
 
             if (status == 401 || !data.success) {

@@ -1,7 +1,12 @@
 <?php
+namespace fmihel\router;
 
 class response
 {
+    const EXCEPTION            = '-exception-';
+    const HTML_SEND_USE_SCRIPT = 0;
+    const HTML_SEND_USE_SERVER = 1;
+
     public static function data(array $data, $code = -1)
     {
         header("Content-Type: application/json; charset=UTF-8");
@@ -35,5 +40,27 @@ class response
             'payload' => $payload,
         ], $code);
     }
+    public static function ok($payload = '', $code = -1)
+    {
+        self::success($payload, $code);
+    }
 
+    public static function html(string $file, int $sendType = self::HTML_SEND_USE_SCRIPT)
+    {
+        if (! file_exists($file)) {
+            throw new \Exception("not exist $file");
+        }
+
+        header('Content-Type: text/html; charset=utf-8');
+        if ($sendType === self::HTML_SEND_USE_SCRIPT) {
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            header('Content-Length: ' . filesize($file));
+            readfile($file);
+        } else {
+            header('X-Sendfile: ' . $file);
+        }
+        exit;
+    }
 }
