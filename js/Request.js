@@ -49,7 +49,7 @@ class Request {
                 url,
                 attrs,
                 data,
-                params
+                ...params
             });
             return out;
 
@@ -98,7 +98,7 @@ class Request {
                 to,
                 sendingData: data,
                 data: json,
-                params
+                ...params
             };
 
             out = await this._callInterceptors('after', out);

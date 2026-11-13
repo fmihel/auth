@@ -3,8 +3,8 @@ namespace fmihel\router\exceptions;
 
 class AccessDenied extends \Exception
 {
-    public function __construct()
+    public function __construct(string $msg = 'Доступ запрещен')
     {
-        parent::__construct('access denied');
+        parent::__construct($msg);
     }
 }

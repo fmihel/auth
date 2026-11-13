@@ -61,3 +61,5 @@ class session extends fmihel\router\session
         ];
     }
 }
+
+session::$key = config['jwt']['key'];

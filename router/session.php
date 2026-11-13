@@ -1,8 +1,12 @@
 <?php
 namespace fmihel\router;
 
+require_once __DIR__ . '/exceptions/TokenExeption.php';
+require_once __DIR__ . '/exceptions/AccessDenied.php';
+
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use fmihel\router\exceptions\AccessDenied;
 use fmihel\router\exceptions\MethodIsNotDefined;
 
 class session
@@ -27,7 +31,7 @@ class session
 
         try {
             if (empty($tokenData = static::checkLogin($login, $password))) {
-                throw new \Exception('createTokenData');
+                throw new AccessDenied();
             }
             self::$token     = self::createToken($tokenData, self::$key, self::$server, self::$expire);
             self::$tokenData = $tokenData;
@@ -58,7 +62,7 @@ class session
             self::$token     = false;
             self::$tokenData = [];
 
-            throw $e;
+            throw new AccessDenied();
         }
     }
 
